@@ -9,8 +9,7 @@
 class AArenaWeapon;
 class UArenaCharacterHealthComponent;
 class UArenaWorldWidget;
-
-
+class UArenaCharacterStats;
 
 UCLASS()
 class SHOOTER_API AArenaCharacter : public ACharacter
@@ -31,10 +30,14 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> HealthBarWidgetClass;
+	//UPROPERTY(EditDefaultsOnly, Category = "Stats")
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Stats")
+	TSet<FName> ObservedStats;
+
 	UFUNCTION()
-	void OnHealthChanged(AActor* InstigatorActor, UArenaCharacterHealthComponent* OwningComp, float NewHealth, float Delta);
+	void OnStatChanged(AActor* InstigatorActor, FName PropertyName, float NewValue, float Delta);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UArenaCharacterHealthComponent* HealthComp;
+	UArenaCharacterStats* Stats;
 };

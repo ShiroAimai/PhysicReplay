@@ -8,7 +8,7 @@
 #include "ArenaWorldWidget.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "ArenaCharacterHealthComponent.h"
+#include "ArenaCharacterStats.h"
 #include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
@@ -16,7 +16,7 @@ AArenaCharacter::AArenaCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	HealthComp = CreateDefaultSubobject<UArenaCharacterHealthComponent>(TEXT("Health"));
+	Stats = CreateDefaultSubobject<UArenaCharacterStats>(TEXT("Character Stats"));
 }
 
 // Called when the game starts or when spawned
@@ -39,14 +39,17 @@ void AArenaCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	HealthComp->OnHealthChanged.AddDynamic(this, &AArenaCharacter::OnHealthChanged);
+	if(ObservedStats.Num() > 0)
+	{
+		Stats->OnStatChanged.AddDynamic(this, &AArenaCharacter::OnStatChanged);
+	}
 }
 
-void AArenaCharacter::OnHealthChanged(AActor* InstigatorActor, UArenaCharacterHealthComponent* OwningComp, float NewHealth, float Delta)
+void AArenaCharacter::OnStatChanged(AActor* InstigatorActor, FName PropertyName, float NewValue, float Delta)
 {
-	if (Delta < 0.0f && NewHealth <= 0.0f)
+	if (ObservedStats.Contains(PropertyName))
 	{
-		OnDie();
+		
 	}
 }
 

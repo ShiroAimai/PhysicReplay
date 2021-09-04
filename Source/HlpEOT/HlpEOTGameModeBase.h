@@ -13,5 +13,5 @@ UCLASS()
 class HLPEOT_API AHlpEOTGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+
 };

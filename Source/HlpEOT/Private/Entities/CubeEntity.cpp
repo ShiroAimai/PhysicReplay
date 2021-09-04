@@ -7,6 +7,7 @@
 #include <GameFramework/SpringArmComponent.h>
 #include <Components/SceneComponent.h>
 #include <Components/BoxComponent.h>
+#include "Components/EntityReplayComponent.h"
 
 // Sets default values
 ACubeEntity::ACubeEntity()
@@ -14,29 +15,20 @@ ACubeEntity::ACubeEntity()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root Comp"));
+	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh Comp"));
+	RootComponent = MeshComp;
 
 	CameraSpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("Camera Spring Arm Comp"));
-	CameraSpringArmComp->SetupAttachment(RootComponent);
-	
-	CollisionComp = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision Comp"));
-	CollisionComp->SetupAttachment(RootComponent);
+	CameraSpringArmComp->SetupAttachment(MeshComp);
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera Comp"));
 	CameraComp->SetupAttachment(CameraSpringArmComp);
 
-	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh Comp"));
-	MeshComp->SetupAttachment(RootComponent);
+	ReplayComp = CreateDefaultSubobject<UEntityReplayComponent>(TEXT("Entity Replay Component"));
 
 	Speed = 0.f;
 }
 
-// Called when the game starts or when spawned
-void ACubeEntity::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
 
 // Called every frame
 void ACubeEntity::Tick(float DeltaTime)
@@ -45,9 +37,7 @@ void ACubeEntity::Tick(float DeltaTime)
 
 	if (!EntityVelocity.IsZero())
 	{
-		FVector ActualLocation = GetActorLocation();
-		FVector NewLocation =  FMath::Lerp(ActualLocation, ActualLocation + EntityVelocity, DeltaTime);
-		SetActorLocation(NewLocation);
+		MeshComp->AddForce(EntityVelocity, NAME_None, true);
 	}
 }
 
@@ -60,13 +50,18 @@ void ACubeEntity::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAxis("MoveRight", this, &ACubeEntity::MoveRight);
 }
 
+UEntityReplayComponent* ACubeEntity::GetReplayComponentFromActor()
+{
+	return ReplayComp;
+}
+
 void ACubeEntity::MoveForward(float Value)
 {
 	EntityVelocity.X = FMath::Clamp(Value, -1.0f, 1.0f) * Speed;
 }
 
 void ACubeEntity::MoveRight(float Value)
-{
+{ 
 	EntityVelocity.Y = FMath::Clamp(Value, -1.0f, 1.0f) * Speed;
 }
 

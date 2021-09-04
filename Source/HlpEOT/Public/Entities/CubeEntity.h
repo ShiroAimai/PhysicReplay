@@ -4,44 +4,42 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Interfaces/ReplayableActor.h"
 #include "CubeEntity.generated.h"
 
+class UEntityReplayComponent;
+
 UCLASS()
-class HLPEOT_API ACubeEntity : public APawn
+class HLPEOT_API ACubeEntity : public APawn, public IReplayableActor
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this pawn's properties
 	ACubeEntity();
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
+	
 	UPROPERTY(EditAnywhere, Category = "Entity")
 	float Speed;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	class UStaticMeshComponent* MeshComp;
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
-	class UBoxComponent* CollisionComp;
-	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	class USpringArmComponent* CameraSpringArmComp;
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	class UCameraComponent* CameraComp;
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
+	UPROPERTY(EditDefaultsOnly, Category = "Components")
+	UEntityReplayComponent* ReplayComp;
+public:	
+	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual UEntityReplayComponent* GetReplayComponentFromActor() override;
 private:
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
 	FVector EntityVelocity;
-
 };

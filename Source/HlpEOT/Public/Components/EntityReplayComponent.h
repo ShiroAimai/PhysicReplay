@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "ReplayState.h"
 #include "EntityReplayComponent.generated.h"
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -19,8 +20,9 @@ public:
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) override;
 
 	void GetReplayData(const FString& RequestedTrackProperties, TArray<FVector>& OutTrackPropertiesValues);
-	void SetReplayData(const TArray<FVector>& spec) const;
+	void SetReplayData(const FString& ReplayProperties, const TArray<FVector>& Specs);
 
+	void UpdateReplayStateWith(EReplayState NewState);
 protected:
 	
 	UPROPERTY(VisibleAnywhere, Category = "Replay")
@@ -33,5 +35,7 @@ protected:
 	FVector ReplayAngularVelocity;
 
 private:
+	EReplayState ReplayState;
+	FProperty* GetLocalPropertyByString(const FString& PropertyName, void*& OutObject);
 	class UStaticMeshComponent* OwnerMeshComp;
 };

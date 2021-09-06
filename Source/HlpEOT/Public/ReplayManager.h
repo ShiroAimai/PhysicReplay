@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "ReplayState.h"
 #include "ReplayManager.generated.h"
 
 /**
@@ -12,29 +13,24 @@
 
 
 USTRUCT()
-struct FReplayValue
+struct FReplayValues
 {
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY(VisibleAnywhere)
-	TArray<FVector> Value;
+	TArray<FVector> Values;
 };
 
 USTRUCT()
-struct FReplayValuesRecord
+struct FReplayRecord
 {
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY(VisibleAnywhere)
-	TArray<FReplayValue> Record;
+	TArray<FReplayValues> Record;
 };
 
-UENUM(BlueprintType)
-enum class EGameState : uint8
-{
-	PLAYER_DRIVEN UMETA(DisplayName = "Player Driven"),
-	REPLAY_DRIVEN UMETA(DisplayName = "Replay Driven")
-};
+class UEntityReplayComponent;
 
 UCLASS()
 class HLPEOT_API AReplayManager : public AActor
@@ -45,16 +41,23 @@ public:
 	AReplayManager();
 	virtual void BeginPlay() override;
 	virtual void Tick( float DeltaSeconds ) override;
+	UFUNCTION(BlueprintCallable)
+	void SetState(EReplayState NewState);
 
 protected:
 	/** Properties need to be written in the format: property_name,anotherproperty_name  */
 	UPROPERTY(EditDefaultsOnly, Category = "Replay Configuration")
 	FString TrackedProperties;
+
 private:
-	TArray<class UEntityReplayComponent*> ReplayComponents;
+	void ExtractReplayDataFromComponents();
+	void SetReplayDataToComponents();
+
+	TArray<UEntityReplayComponent*> ReplayComponents;
 	
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"))
-	TMap<FName, FReplayValuesRecord> ReplayRecords;
+	TMap<FName, FReplayRecord> ReplayRecords;
 
-	EGameState State;
+	EReplayState State;
+	size_t ReplayIndex = 0;
 };

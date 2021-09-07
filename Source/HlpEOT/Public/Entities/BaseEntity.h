@@ -5,17 +5,17 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Interfaces/ReplayableActor.h"
-#include "CubeEntity.generated.h"
+#include "BaseEntity.generated.h"
 
 class UEntityReplayComponent;
 
-UCLASS()
-class HLPEOT_API ACubeEntity : public APawn, public IReplayableActor
+UCLASS(BlueprintType)
+class HLPEOT_API ABaseEntity : public APawn, public IReplayableActor
 {
 	GENERATED_BODY()
 
 public:
-	ACubeEntity();
+	ABaseEntity();
 
 protected:
 	

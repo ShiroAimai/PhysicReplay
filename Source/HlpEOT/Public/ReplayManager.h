@@ -41,6 +41,7 @@ public:
 	AReplayManager();
 	virtual void BeginPlay() override;
 	virtual void Tick( float DeltaSeconds ) override;
+	
 	UFUNCTION(BlueprintCallable)
 	void SetState(EReplayState NewState);
 
@@ -59,5 +60,6 @@ private:
 	TMap<FName, FReplayRecord> ReplayRecords;
 
 	EReplayState State;
+	/** Index used in state REPLAY_DRIVEN to sequentially iterate on tracked values */
 	size_t ReplayIndex = 0;
 };

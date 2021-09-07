@@ -13,7 +13,6 @@ class HLPEOT_API UEntityReplayComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
 	UEntityReplayComponent();
 	virtual void InitializeComponent() override;
 	virtual void UninitializeComponent() override;
@@ -23,6 +22,10 @@ public:
 	void SetReplayData(const FString& ReplayProperties, const TArray<FVector>& Specs);
 
 	void UpdateReplayStateWith(EReplayState NewState);
+
+	inline bool IsPlayerDriven() const {
+		return ReplayState == EReplayState::PLAYER_DRIVEN;
+	}
 protected:
 	
 	UPROPERTY(VisibleAnywhere, Category = "Replay")
@@ -36,6 +39,10 @@ protected:
 
 private:
 	EReplayState ReplayState;
+	struct FBodyInstance* OwnerBI;
+	
+	/**RequestedProperties should be split based on ","*/
+	void ExtractTrackedProperties(const FString& RequestedProperties, TArray<FString>& OutSplittedProperties) const;
+	FStructProperty* RetrieveStructPropertyByString(const FString& PropertyName, void*& OutPropertyAddressInObject);
 	FProperty* GetLocalPropertyByString(const FString& PropertyName, void*& OutObject);
-	class UStaticMeshComponent* OwnerMeshComp;
 };

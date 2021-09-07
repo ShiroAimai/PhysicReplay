@@ -5,6 +5,7 @@
 #include <Kismet/GameplayStatics.h>
 #include "Interfaces/ReplayableActor.h"
 #include "Components/EntityReplayComponent.h"
+#include "ReplayLogContext.h"
 
 AReplayManager::AReplayManager()
 {
@@ -28,9 +29,13 @@ void AReplayManager::BeginPlay()
 		}
 	}
 
-	for (UEntityReplayComponent* Comp : ReplayComponents)
-		Comp->UpdateReplayStateWith(State);
+	if(ReplayComponents.Num() > 0)
+	{
+		for (UEntityReplayComponent* Comp : ReplayComponents)
+			Comp->UpdateReplayStateWith(State);
+	}
 
+	UE_LOG(LogReplay, Warning, TEXT("No ReplayComponents found"));
 }
 
 void AReplayManager::Tick(float DeltaSeconds)
@@ -94,7 +99,11 @@ void AReplayManager::SetReplayDataToComponents()
 		TArray<FVector> ReplayValuesForIndex;
 		for (const FReplayValues& ReplayValue : ComponentRecord.Record)
 		{
-			if (ReplayIndex >= ReplayValue.Values.Num()) break;
+			if (ReplayIndex >= ReplayValue.Values.Num())
+			{
+				ReplayComponent->UpdateReplayStateWith(EReplayState::NONE);
+				break;
+			}
 			ReplayValuesForIndex.Add(ReplayValue.Values[ReplayIndex]);
 		}
 		ReplayComponent->SetReplayData(TrackedProperties, ReplayValuesForIndex);

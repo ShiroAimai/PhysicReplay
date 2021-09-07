@@ -1,16 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Entities/CubeEntity.h"
+#include "Entities/BaseEntity.h"
 #include <Components/StaticMeshComponent.h>
 #include <Camera/CameraComponent.h>
 #include <GameFramework/SpringArmComponent.h>
 #include <Components/SceneComponent.h>
-#include <Components/BoxComponent.h>
 #include "Components/EntityReplayComponent.h"
 
 // Sets default values
-ACubeEntity::ACubeEntity()
+ABaseEntity::ABaseEntity()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -31,9 +30,11 @@ ACubeEntity::ACubeEntity()
 
 
 // Called every frame
-void ACubeEntity::Tick(float DeltaTime)
+void ABaseEntity::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	if(!ReplayComp->IsPlayerDriven()) return;
 
 	if (!EntityVelocity.IsZero())
 	{
@@ -42,25 +43,25 @@ void ACubeEntity::Tick(float DeltaTime)
 }
 
 // Called to bind functionality to input
-void ACubeEntity::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ABaseEntity::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAxis("MoveForward", this, &ACubeEntity::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &ACubeEntity::MoveRight);
+	PlayerInputComponent->BindAxis("MoveForward", this, &ABaseEntity::MoveForward);
+	PlayerInputComponent->BindAxis("MoveRight", this, &ABaseEntity::MoveRight);
 }
 
-UEntityReplayComponent* ACubeEntity::GetReplayComponentFromActor()
+UEntityReplayComponent* ABaseEntity::GetReplayComponentFromActor()
 {
 	return ReplayComp;
 }
 
-void ACubeEntity::MoveForward(float Value)
+void ABaseEntity::MoveForward(float Value)
 {
 	EntityVelocity.X = FMath::Clamp(Value, -1.0f, 1.0f) * Speed;
 }
 
-void ACubeEntity::MoveRight(float Value)
+void ABaseEntity::MoveRight(float Value)
 { 
 	EntityVelocity.Y = FMath::Clamp(Value, -1.0f, 1.0f) * Speed;
 }

@@ -50,8 +50,17 @@ void AReplayManager::Tick(float DeltaSeconds)
 	}
 	else
 	{
-		SetReplayDataToComponents();	
-		++ReplayIndex;
+		bool isReplayFinished = false;
+		SetReplayDataToComponents(isReplayFinished);	
+		
+		if(!isReplayFinished)
+		{
+			++ReplayIndex;
+		}
+		else
+		{
+			OnReplayedAllEntities();
+		}
 	}
 }
 
@@ -90,7 +99,7 @@ void AReplayManager::ExtractReplayDataFromComponents()
 	}
 }
 
-void AReplayManager::SetReplayDataToComponents()
+void AReplayManager::SetReplayDataToComponents(bool& IsReplayFinished)
 {
 	for (UEntityReplayComponent* ReplayComponent : ReplayComponents)
 	{
@@ -101,6 +110,10 @@ void AReplayManager::SetReplayDataToComponents()
 		{
 			if (ReplayIndex >= ReplayValue.Values.Num())
 			{
+				if (!IsReplayFinished)
+				{
+					IsReplayFinished = true;
+				}
 				ReplayComponent->UpdateReplayStateWith(EReplayState::NONE);
 				break;
 			}

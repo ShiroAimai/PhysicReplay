@@ -45,14 +45,22 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetState(EReplayState NewState);
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnReplayedAllEntities();
 protected:
 	/** Properties need to be written in the format: property_name,anotherproperty_name  */
 	UPROPERTY(EditDefaultsOnly, Category = "Replay Configuration")
 	FString TrackedProperties;
 
+	/** Timer Minutes */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Replay Configuration", meta = (ClampMin = "0", ClampMax = "59", UIMin = "00", UIMax = "59"))
+	int Minutes;
+	/** Timer Seconds */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Replay Configuration", meta = (ClampMin = "0", ClampMax = "59", UIMin = "00", UIMax = "59"))
+	int Seconds;
 private:
 	void ExtractReplayDataFromComponents();
-	void SetReplayDataToComponents();
+	void SetReplayDataToComponents(bool& IsReplayFinished);
 
 	TArray<UEntityReplayComponent*> ReplayComponents;
 	

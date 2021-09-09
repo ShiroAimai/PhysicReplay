@@ -11,7 +11,7 @@ AReplayManager::AReplayManager()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	State = EReplayState::PLAYER_DRIVEN;
+	State = EReplayState::ENTITY_DRIVEN;
 }
 
 void AReplayManager::BeginPlay()
@@ -44,7 +44,7 @@ void AReplayManager::Tick(float DeltaSeconds)
 
 	if (ReplayComponents.Num() == 0) return;
 
-	if (State == EReplayState::PLAYER_DRIVEN)
+	if (State == EReplayState::ENTITY_DRIVEN)
 	{
 		ExtractReplayDataFromComponents();
 	}
@@ -69,7 +69,7 @@ void AReplayManager::SetState(EReplayState NewState)
 	if(State == NewState) return;
 	State = NewState;
 	
-	if (State == EReplayState::PLAYER_DRIVEN)
+	if (State == EReplayState::ENTITY_DRIVEN)
 	{
 		ReplayIndex = 0;
 	}
@@ -84,7 +84,7 @@ void AReplayManager::ExtractReplayDataFromComponents()
 {
 	for (UEntityReplayComponent* ReplayComponent : ReplayComponents)
 	{
-		FName ComponentName = ReplayComponent->GetFName();
+		FName ComponentName = ReplayComponent->GetOwner()->GetFName();
 		FReplayRecord& ComponentRecord = ReplayRecords.FindOrAdd(ComponentName);
 		TArray<FVector> NewTrackedValues;
 		ReplayComponent->GetReplayData(TrackedProperties, NewTrackedValues);
@@ -103,10 +103,12 @@ void AReplayManager::SetReplayDataToComponents(bool& IsReplayFinished)
 {
 	for (UEntityReplayComponent* ReplayComponent : ReplayComponents)
 	{
-		FName ComponentName = ReplayComponent->GetFName();
-		FReplayRecord& ComponentRecord = ReplayRecords.FindOrAdd(ComponentName);
+		FName ComponentName = ReplayComponent->GetOwner()->GetFName();
+		const FReplayRecord* ComponentRecord = ReplayRecords.Find(ComponentName);
+		if(!ComponentRecord) continue;
+
 		TArray<FVector> ReplayValuesForIndex;
-		for (const FReplayValues& ReplayValue : ComponentRecord.Record)
+		for (const FReplayValues& ReplayValue : ComponentRecord->Record)
 		{
 			if (ReplayIndex >= ReplayValue.Values.Num())
 			{

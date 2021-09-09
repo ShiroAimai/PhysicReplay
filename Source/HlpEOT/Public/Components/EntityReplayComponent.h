@@ -23,8 +23,8 @@ public:
 
 	void UpdateReplayStateWith(EReplayState NewState);
 
-	inline bool IsPlayerDriven() const {
-		return ReplayState == EReplayState::PLAYER_DRIVEN;
+	inline bool IsEntityDriven() const {
+		return ReplayState == EReplayState::ENTITY_DRIVEN;
 	}
 protected:
 	

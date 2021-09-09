@@ -48,7 +48,7 @@ void UEntityReplayComponent::TickComponent(float DeltaTime, enum ELevelTick Tick
 		return;
 	}
 	AActor* Owner = GetOwner();
-	if (ReplayState == EReplayState::PLAYER_DRIVEN)
+	if (ReplayState == EReplayState::ENTITY_DRIVEN)
 	{
 		ReplayLocation = Owner->GetActorLocation();
 		ReplayRotation = Owner->GetActorRotation();

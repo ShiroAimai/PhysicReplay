@@ -9,37 +9,25 @@
 
 class UEntityReplayComponent;
 
-UCLASS(BlueprintType)
+UCLASS(Abstract)
 class HLPEOT_API ABaseEntity : public APawn, public IReplayableActor
 {
 	GENERATED_BODY()
 
 public:
 	ABaseEntity();
+	virtual void Tick(float DeltaTime) override;
 
+	virtual UEntityReplayComponent* GetReplayComponentFromActor() override;
 protected:
+	virtual void UpdateEntity(float DeltaTime) PURE_VIRTUAL(ABaseEntity::UpdateEntity(DeltaTime));
 	
 	UPROPERTY(EditAnywhere, Category = "Entity")
 	float Speed;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	class UStaticMeshComponent* MeshComp;
-	UPROPERTY(EditDefaultsOnly, Category = "Components")
-	class USpringArmComponent* CameraSpringArmComp;
-	UPROPERTY(EditDefaultsOnly, Category = "Components")
-	class UCameraComponent* CameraComp;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	UEntityReplayComponent* ReplayComp;
-public:	
-	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	virtual UEntityReplayComponent* GetReplayComponentFromActor() override;
-private:
-
-	void MoveForward(float Value);
-	void MoveRight(float Value);
-
-	FVector EntityVelocity;
 };

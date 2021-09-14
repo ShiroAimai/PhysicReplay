@@ -41,6 +41,8 @@ private:
 	EReplayState ReplayState;
 	struct FBodyInstance* OwnerBI;
 	
+	TArray<FName> AppliedPropertiesNames;
+
 	/**RequestedProperties should be split based on ","*/
 	void ExtractTrackedProperties(const FString& RequestedProperties, TArray<FString>& OutSplittedProperties) const;
 	FStructProperty* RetrieveStructPropertyByString(const FString& PropertyName, void*& OutPropertyAddressInObject);

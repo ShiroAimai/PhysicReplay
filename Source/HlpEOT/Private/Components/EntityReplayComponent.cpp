@@ -11,9 +11,11 @@
 UEntityReplayComponent::UEntityReplayComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
 
 	ReplayState = EReplayState::NONE;
 	bWantsInitializeComponent = true;
+
 }
 
 void UEntityReplayComponent::InitializeComponent()
@@ -47,6 +49,7 @@ void UEntityReplayComponent::TickComponent(float DeltaTime, enum ELevelTick Tick
 		UE_LOG(LogReplay, Warning, TEXT("Missing Owner Body Intance"));
 		return;
 	}
+	
 	AActor* Owner = GetOwner();
 	if (ReplayState == EReplayState::ENTITY_DRIVEN)
 	{
@@ -58,11 +61,25 @@ void UEntityReplayComponent::TickComponent(float DeltaTime, enum ELevelTick Tick
 	}
 	else if (ReplayState == EReplayState::REPLAY_DRIVEN)
 	{
-		Owner->SetActorLocation(ReplayLocation);
-		Owner->SetActorRotation(ReplayRotation);
-		
-		OwnerBI->SetLinearVelocity(ReplayVelocity, false);
-		OwnerBI->SetAngularVelocityInRadians(ReplayAngularVelocity, false);
+		for (FName& PropertyName : AppliedPropertiesNames)
+		{
+			if(PropertyName == FName("ReplayLocation"))
+			{
+				Owner->SetActorLocation(ReplayLocation);
+			}
+			if(PropertyName == FName("ReplayRotation"))
+			{
+				Owner->SetActorRotation(ReplayRotation);
+			}
+			if (PropertyName == FName("ReplayVelocity"))
+			{
+				OwnerBI->SetLinearVelocity(ReplayVelocity, false);
+			}
+			if (PropertyName == FName("ReplayAngularVelocity"))
+			{
+				OwnerBI->SetAngularVelocityInRadians(ReplayAngularVelocity, false);
+			}
+		}
 	}
 }
 
@@ -90,7 +107,7 @@ void UEntityReplayComponent::GetReplayData(const FString& RequestedTrackProperti
 				FVector Value = FVector::ZeroVector;
 				StructProperty->CopyCompleteValue(&Value, StructAddress);
 				UE_LOG(LogReplay, Error, TEXT("Vector value is : %s"), *Value.ToString())
-					OutTrackPropertiesValues.Add(Value);
+				OutTrackPropertiesValues.Add(Value);
 			}
 			//check if it is rotator
 			if (StructProperty->Struct == TBaseStructure<FRotator>::Get())
@@ -121,6 +138,7 @@ void UEntityReplayComponent::SetReplayData(const FString& ReplayProperties, cons
 		return;
 	}
 
+	AppliedPropertiesNames.Empty();
 	for (size_t i = 0; i < ReplayingProperties.Num(); ++i)
 	{
 		//check property is struct
@@ -132,12 +150,14 @@ void UEntityReplayComponent::SetReplayData(const FString& ReplayProperties, cons
 			if (StructProperty->Struct == TBaseStructure<FVector>::Get())
 			{
 				StructProperty->CopyCompleteValue(StructAddress, &Specs[i]);
+				AppliedPropertiesNames.Add(StructProperty->GetFName());
 			}
 			//check if it is rotator
 			if (StructProperty->Struct == TBaseStructure<FRotator>::Get())
 			{
 				FRotator Rotation = FRotator::MakeFromEuler(Specs[i]);
 				StructProperty->CopyCompleteValue(StructAddress, &Rotation);
+				AppliedPropertiesNames.Add(StructProperty->GetFName());
 			}
 		}
 	}

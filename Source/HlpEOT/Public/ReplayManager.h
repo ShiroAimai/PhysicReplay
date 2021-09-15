@@ -51,7 +51,8 @@ protected:
 	/** Properties need to be written in the format: property_name,anotherproperty_name  */
 	UPROPERTY(EditDefaultsOnly, Category = "Replay Configuration")
 	FString TrackedProperties;
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Replay Configuration")
+	float SampleRatePerSecond;
 	/** Timer Minutes */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Replay Configuration", meta = (ClampMin = "0", ClampMax = "59", UIMin = "00", UIMax = "59"))
 	int Minutes;
@@ -59,6 +60,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Replay Configuration", meta = (ClampMin = "0", ClampMax = "59", UIMin = "00", UIMax = "59"))
 	int Seconds;
 private:
+	void EntityDrivenExecute(float deltaTime);
+	void ReplayDrivenExecute(float deltaTime);
+
 	void ExtractReplayDataFromComponents();
 	void SetReplayDataToComponents(bool& IsReplayFinished);
 
@@ -68,6 +72,6 @@ private:
 	TMap<FName, FReplayRecord> ReplayRecords;
 
 	EReplayState State;
-	/** Index used in state REPLAY_DRIVEN to sequentially iterate on tracked values */
-	size_t ReplayIndex = 0;
+	float elapsed;
+	float trackingInterval;
 };

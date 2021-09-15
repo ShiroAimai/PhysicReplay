@@ -7,10 +7,14 @@
 #include "Components/EntityReplayComponent.h"
 #include "ReplayLogContext.h"
 
+#pragma optimize("",off)
 AReplayManager::AReplayManager()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	SampleRatePerSecond = 1.f;
+	trackingInterval = 1.f;
+	elapsed = 0.f;
 	State = EReplayState::ENTITY_DRIVEN;
 }
 
@@ -34,8 +38,13 @@ void AReplayManager::BeginPlay()
 		for (UEntityReplayComponent* Comp : ReplayComponents)
 			Comp->UpdateReplayStateWith(State);
 	}
+	else
+	{
+		UE_LOG(LogReplay, Warning, TEXT("No ReplayComponents found"));
+	}
 
-	UE_LOG(LogReplay, Warning, TEXT("No ReplayComponents found"));
+	trackingInterval = 1.f / SampleRatePerSecond;
+	elapsed = trackingInterval;
 }
 
 void AReplayManager::Tick(float DeltaSeconds)
@@ -46,21 +55,11 @@ void AReplayManager::Tick(float DeltaSeconds)
 
 	if (State == EReplayState::ENTITY_DRIVEN)
 	{
-		ExtractReplayDataFromComponents();
+		EntityDrivenExecute(DeltaSeconds);
 	}
 	else
 	{
-		bool isReplayFinished = false;
-		SetReplayDataToComponents(isReplayFinished);	
-		
-		if(!isReplayFinished)
-		{
-			++ReplayIndex;
-		}
-		else
-		{
-			OnReplayedAllEntities();
-		}
+		ReplayDrivenExecute(DeltaSeconds);
 	}
 }
 
@@ -71,12 +70,35 @@ void AReplayManager::SetState(EReplayState NewState)
 	
 	if (State == EReplayState::ENTITY_DRIVEN)
 	{
-		ReplayIndex = 0;
+		elapsed = 0.f;
 	}
 
 	for (UEntityReplayComponent* ReplayComponent : ReplayComponents)
 	{
 		ReplayComponent->UpdateReplayStateWith(State);
+	}
+}
+
+void AReplayManager::EntityDrivenExecute(float deltaTime)
+{
+	elapsed += deltaTime;
+	if (elapsed >= trackingInterval)
+	{
+		ExtractReplayDataFromComponents();
+		elapsed = 0.f;
+	}
+}
+
+void AReplayManager::ReplayDrivenExecute(float deltaTime)
+{
+	elapsed += deltaTime;
+
+	bool isReplayFinished = false;
+	SetReplayDataToComponents(isReplayFinished);
+
+	if (isReplayFinished)
+	{
+		OnReplayedAllEntities();
 	}
 }
 
@@ -101,6 +123,13 @@ void AReplayManager::ExtractReplayDataFromComponents()
 
 void AReplayManager::SetReplayDataToComponents(bool& IsReplayFinished)
 {
+	const size_t ReplayIndex = FMath::Floor(elapsed / trackingInterval);
+	const float t_ReplayIndex = ReplayIndex * trackingInterval;
+	const size_t NextReplayIndex = ReplayIndex + 1;
+	const float t_NextReplayIndex = NextReplayIndex * trackingInterval;
+
+	const float InterpFactor = (elapsed - t_ReplayIndex) / (t_NextReplayIndex - t_ReplayIndex);
+
 	for (UEntityReplayComponent* ReplayComponent : ReplayComponents)
 	{
 		FName ComponentName = ReplayComponent->GetOwner()->GetFName();
@@ -110,7 +139,7 @@ void AReplayManager::SetReplayDataToComponents(bool& IsReplayFinished)
 		TArray<FVector> ReplayValuesForIndex;
 		for (const FReplayValues& ReplayValue : ComponentRecord->Record)
 		{
-			if (ReplayIndex >= ReplayValue.Values.Num())
+			if (ReplayIndex >= ReplayValue.Values.Num() || NextReplayIndex >= ReplayValue.Values.Num())
 			{
 				if (!IsReplayFinished)
 				{
@@ -119,8 +148,10 @@ void AReplayManager::SetReplayDataToComponents(bool& IsReplayFinished)
 				ReplayComponent->UpdateReplayStateWith(EReplayState::NONE);
 				break;
 			}
-			ReplayValuesForIndex.Add(ReplayValue.Values[ReplayIndex]);
+			FVector LerpValue = FMath::VInterpConstantTo(ReplayValue.Values[ReplayIndex], ReplayValue.Values[NextReplayIndex], InterpFactor, 1.f);
+			ReplayValuesForIndex.Add(LerpValue);
 		}
 		ReplayComponent->SetReplayData(TrackedProperties, ReplayValuesForIndex);
 	}
 }
+#pragma optimize("",on)

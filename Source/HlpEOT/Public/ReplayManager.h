@@ -5,30 +5,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "ReplayState.h"
+#include "TrackedValues.h"
 #include "ReplayManager.generated.h"
 
 /**
  * 
  */
-
-
-USTRUCT()
-struct FReplayValues
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY(VisibleAnywhere)
-	TArray<FVector> Values;
-};
-
-USTRUCT()
-struct FReplayRecord
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY(VisibleAnywhere)
-	TArray<FReplayValues> Record;
-};
 
 class UEntityReplayComponent;
 

@@ -83,7 +83,7 @@ void UEntityReplayComponent::TickComponent(float DeltaTime, enum ELevelTick Tick
 	}
 }
 
-void UEntityReplayComponent::GetReplayData(const FString& RequestedTrackProperties, TArray<FVector>& OutTrackPropertiesValues)
+void UEntityReplayComponent::GetReplayData(const FString& RequestedTrackProperties, FReplayValues& OutTrackPropertiesValues)
 {
 	if (RequestedTrackProperties.Len() == 0)
 	{
@@ -101,29 +101,31 @@ void UEntityReplayComponent::GetReplayData(const FString& RequestedTrackProperti
 		FStructProperty* StructProperty = RetrieveStructPropertyByString(PropertyName, StructAddress);
 		if (StructProperty)
 		{
+			FVector VectorValue = FVector::ZeroVector;
+			FRotator RotatorValue = FRotator::ZeroRotator;
+
 			//check property is vector
 			if (StructProperty->Struct == TBaseStructure<FVector>::Get())
 			{
-				FVector Value = FVector::ZeroVector;
-				StructProperty->CopyCompleteValue(&Value, StructAddress);
-				UE_LOG(LogReplay, Error, TEXT("Vector value is : %s"), *Value.ToString())
-				OutTrackPropertiesValues.Add(Value);
+				StructProperty->CopyCompleteValue(&VectorValue, StructAddress);
+				UE_LOG(LogReplay, Error, TEXT("Vector value is : %s"), *VectorValue.ToString())
 			}
 			//check if it is rotator
 			if (StructProperty->Struct == TBaseStructure<FRotator>::Get())
 			{
-				FRotator Value = FRotator::ZeroRotator;
-				StructProperty->CopyCompleteValue(&Value, StructAddress);
-				UE_LOG(LogReplay, Error, TEXT("Rotator value is : %s"), *Value.ToString())
-				OutTrackPropertiesValues.Add(Value.Euler()); //we extract Euler representation
+				StructProperty->CopyCompleteValue(&RotatorValue, StructAddress);
+				UE_LOG(LogReplay, Error, TEXT("Rotator value is : %s"), *RotatorValue.ToString())
 			}
+
+			OutTrackPropertiesValues.VectorValues.Add(VectorValue);
+			OutTrackPropertiesValues.QuatValues.Add(RotatorValue.Quaternion()); //we extract FQuat representation
 		}
 	}
 }
 
-void UEntityReplayComponent::SetReplayData(const FString& ReplayProperties, const TArray<FVector>& Specs)
+void UEntityReplayComponent::SetReplayData(const FString& ReplayProperties, const FReplayValues& Specs)
 {
-	if (ReplayProperties.Len() == 0 || Specs.Num() == 0)
+	if (ReplayProperties.Len() == 0 || Specs.VectorValues.Num() == 0 || Specs.QuatValues.Num() == 0)
 	{
 		UE_LOG(LogReplay, Warning, TEXT("Passed invalid parameters to method SetReplayData"));
 		return;
@@ -132,7 +134,7 @@ void UEntityReplayComponent::SetReplayData(const FString& ReplayProperties, cons
 	TArray<FString> ReplayingProperties;
 	ExtractTrackedProperties(ReplayProperties, ReplayingProperties);
 
-	if (ReplayingProperties.Num() != Specs.Num())
+	if (ReplayingProperties.Num() != Specs.VectorValues.Num() || ReplayingProperties.Num() != Specs.QuatValues.Num())
 	{
 		UE_LOG(LogReplay, Error, TEXT("ReplayProperties and Specs are of different lenghts. Must be of the same length"));
 		return;
@@ -149,13 +151,13 @@ void UEntityReplayComponent::SetReplayData(const FString& ReplayProperties, cons
 			//check property is vector
 			if (StructProperty->Struct == TBaseStructure<FVector>::Get())
 			{
-				StructProperty->CopyCompleteValue(StructAddress, &Specs[i]);
+				StructProperty->CopyCompleteValue(StructAddress, &Specs.VectorValues[i]);
 				AppliedPropertiesNames.Add(StructProperty->GetFName());
 			}
 			//check if it is rotator
 			if (StructProperty->Struct == TBaseStructure<FRotator>::Get())
 			{
-				FRotator Rotation = FRotator::MakeFromEuler(Specs[i]);
+				FRotator Rotation = Specs.QuatValues[i].Rotator();
 				StructProperty->CopyCompleteValue(StructAddress, &Rotation);
 				AppliedPropertiesNames.Add(StructProperty->GetFName());
 			}

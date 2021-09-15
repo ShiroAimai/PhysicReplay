@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "ReplayState.h"
+#include "TrackedValues.h"
 #include "EntityReplayComponent.generated.h"
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -18,8 +19,8 @@ public:
 	virtual void UninitializeComponent() override;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) override;
 
-	void GetReplayData(const FString& RequestedTrackProperties, TArray<FVector>& OutTrackPropertiesValues);
-	void SetReplayData(const FString& ReplayProperties, const TArray<FVector>& Specs);
+	void GetReplayData(const FString& RequestedTrackProperties, FReplayValues& OutTrackPropertiesValues);
+	void SetReplayData(const FString& ReplayProperties, const FReplayValues& Specs);
 
 	void UpdateReplayStateWith(EReplayState NewState);
 

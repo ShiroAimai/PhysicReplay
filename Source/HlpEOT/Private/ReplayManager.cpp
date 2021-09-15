@@ -68,7 +68,7 @@ void AReplayManager::SetState(EReplayState NewState)
 	if(State == NewState) return;
 	State = NewState;
 	
-	if (State == EReplayState::ENTITY_DRIVEN)
+	if (State == EReplayState::REPLAY_DRIVEN)
 	{
 		elapsed = 0.f;
 	}
@@ -108,16 +108,9 @@ void AReplayManager::ExtractReplayDataFromComponents()
 	{
 		FName ComponentName = ReplayComponent->GetOwner()->GetFName();
 		FReplayRecord& ComponentRecord = ReplayRecords.FindOrAdd(ComponentName);
-		TArray<FVector> NewTrackedValues;
+		FReplayValues NewTrackedValues;
 		ReplayComponent->GetReplayData(TrackedProperties, NewTrackedValues);
-		for (size_t i = 0; i < NewTrackedValues.Num(); i++)
-		{
-			if (ComponentRecord.Record.Num() <= i)
-			{
-				ComponentRecord.Record.Add(FReplayValues());
-			}
-			ComponentRecord.Record[i].Values.Add(NewTrackedValues[i]);
-		}
+		ComponentRecord.Record.Add(NewTrackedValues);
 	}
 }
 
@@ -135,23 +128,30 @@ void AReplayManager::SetReplayDataToComponents(bool& IsReplayFinished)
 		FName ComponentName = ReplayComponent->GetOwner()->GetFName();
 		const FReplayRecord* ComponentRecord = ReplayRecords.Find(ComponentName);
 		if(!ComponentRecord) continue;
-
-		TArray<FVector> ReplayValuesForIndex;
-		for (const FReplayValues& ReplayValue : ComponentRecord->Record)
+		if (ReplayIndex >= ComponentRecord->Record.Num() - 1)
 		{
-			if (ReplayIndex >= ReplayValue.Values.Num() || NextReplayIndex >= ReplayValue.Values.Num())
+			if (!IsReplayFinished)
 			{
-				if (!IsReplayFinished)
-				{
-					IsReplayFinished = true;
-				}
-				ReplayComponent->UpdateReplayStateWith(EReplayState::NONE);
-				break;
+				IsReplayFinished = true;
 			}
-			FVector LerpValue = FMath::VInterpConstantTo(ReplayValue.Values[ReplayIndex], ReplayValue.Values[NextReplayIndex], InterpFactor, 1.f);
-			ReplayValuesForIndex.Add(LerpValue);
+			ReplayComponent->UpdateReplayStateWith(EReplayState::NONE);
+			continue;
 		}
-		ReplayComponent->SetReplayData(TrackedProperties, ReplayValuesForIndex);
+		
+		FReplayValues OutValues;
+		const FReplayValues& ValuesAtReplayIndex = ComponentRecord->Record[ReplayIndex];
+		const FReplayValues& ValuesAtNextReplayIndex = ComponentRecord->Record[NextReplayIndex];
+
+		for (size_t i = 0; i < ValuesAtReplayIndex.VectorValues.Num(); ++i)
+		{
+			OutValues.VectorValues.Add(FMath::VInterpConstantTo(ValuesAtReplayIndex.VectorValues[i], ValuesAtNextReplayIndex.VectorValues[i], InterpFactor, 1.f));
+		}
+		for (size_t i = 0; i < ValuesAtReplayIndex.QuatValues.Num(); ++i)
+		{
+			OutValues.QuatValues.Add(FQuat::Slerp(ValuesAtReplayIndex.QuatValues[i], ValuesAtNextReplayIndex.QuatValues[i], InterpFactor));
+		}
+
+		ReplayComponent->SetReplayData(TrackedProperties, OutValues);
 	}
 }
 #pragma optimize("",on)

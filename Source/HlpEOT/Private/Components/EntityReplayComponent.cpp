@@ -7,7 +7,6 @@
 #include <PhysicsEngine/BodyInstance.h>
 #include "ReplayLogContext.h"
 
-#pragma optimize("", off)
 UEntityReplayComponent::UEntityReplayComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -15,7 +14,6 @@ UEntityReplayComponent::UEntityReplayComponent()
 
 	ReplayState = EReplayState::NONE;
 	bWantsInitializeComponent = true;
-
 }
 
 void UEntityReplayComponent::InitializeComponent()
@@ -51,6 +49,7 @@ void UEntityReplayComponent::TickComponent(float DeltaTime, enum ELevelTick Tick
 	}
 	
 	AActor* Owner = GetOwner();
+
 	if (ReplayState == EReplayState::ENTITY_DRIVEN)
 	{
 		ReplayLocation = Owner->GetActorLocation();
@@ -204,5 +203,3 @@ FProperty* UEntityReplayComponent::GetLocalPropertyByString(const FString& Prope
 
 	return UReflectionUtilsFunctionLibrary::RetrieveProperty(this, Path, OutObject);
 }
-
-#pragma optimize("", on)

@@ -7,7 +7,6 @@
 #include "Components/EntityReplayComponent.h"
 #include "ReplayLogContext.h"
 
-#pragma optimize("",off)
 AReplayManager::AReplayManager()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -127,7 +126,9 @@ void AReplayManager::SetReplayDataToComponents(bool& IsReplayFinished)
 	{
 		FName ComponentName = ReplayComponent->GetOwner()->GetFName();
 		const FReplayRecord* ComponentRecord = ReplayRecords.Find(ComponentName);
+		
 		if(!ComponentRecord) continue;
+		
 		if (ReplayIndex >= ComponentRecord->Record.Num() - 1)
 		{
 			if (!IsReplayFinished)
@@ -142,10 +143,12 @@ void AReplayManager::SetReplayDataToComponents(bool& IsReplayFinished)
 		const FReplayValues& ValuesAtReplayIndex = ComponentRecord->Record[ReplayIndex];
 		const FReplayValues& ValuesAtNextReplayIndex = ComponentRecord->Record[NextReplayIndex];
 
+		//compute Vectors list
 		for (size_t i = 0; i < ValuesAtReplayIndex.VectorValues.Num(); ++i)
 		{
 			OutValues.VectorValues.Add(FMath::VInterpConstantTo(ValuesAtReplayIndex.VectorValues[i], ValuesAtNextReplayIndex.VectorValues[i], InterpFactor, 1.f));
 		}
+		//compute Quaternion list
 		for (size_t i = 0; i < ValuesAtReplayIndex.QuatValues.Num(); ++i)
 		{
 			OutValues.QuatValues.Add(FQuat::Slerp(ValuesAtReplayIndex.QuatValues[i], ValuesAtNextReplayIndex.QuatValues[i], InterpFactor));
@@ -154,4 +157,3 @@ void AReplayManager::SetReplayDataToComponents(bool& IsReplayFinished)
 		ReplayComponent->SetReplayData(TrackedProperties, OutValues);
 	}
 }
-#pragma optimize("",on)
